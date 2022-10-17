@@ -31,8 +31,14 @@ menu_btn = KeyboardButton("/menu")
 new_filter_btn = KeyboardButton("/new_filter")
 my_filters_btn = KeyboardButton("/my_filters")
 edit_filter_btn = KeyboardButton("/edit_filter")
+my_favorites_btn = KeyboardButton("/my_favorites")
 
 save_filter_btn = KeyboardButton("/save_filter")
+
+add_to_favorites_btn = InlineKeyboardButton("В избранное", callback_data="add_to_favorites")
+delete_boat_btn = InlineKeyboardButton("Удалить", callback_data="delete_boat")
+cancel_favorites_btn = InlineKeyboardButton("Отменить", callback_data="cancel_favorites")
+delete_from_favorites_btn = InlineKeyboardButton("Удалить", callback_data="delete_from_favorites")
 
 start_kb = ReplyKeyboardMarkup(resize_keyboard=True)
 start_kb.row(search_btn, settings_btn)
@@ -58,8 +64,8 @@ new_filter_kb.row(price_btn)
 new_filter_kb.row(save_filter_btn)
 
 settings_kb = ReplyKeyboardMarkup(resize_keyboard=True)
-settings_kb.row(menu_btn, new_filter_btn)
-settings_kb.row(my_filters_btn, edit_filter_btn)
+settings_kb.row(menu_btn, my_filters_btn, my_favorites_btn)
+settings_kb.row(new_filter_btn, edit_filter_btn)
 
 
 def get_my_filters_kb(filters):
@@ -68,3 +74,13 @@ def get_my_filters_kb(filters):
         btn = InlineKeyboardButton(str(f[0]), callback_data=str(f[0]))
         kb.insert(btn)
     return kb
+
+
+boat_kb = InlineKeyboardMarkup()
+boat_kb.row(add_to_favorites_btn, delete_boat_btn)
+
+boat_kb_2 = InlineKeyboardMarkup()
+boat_kb_2.row(cancel_favorites_btn, delete_boat_btn)
+
+favorites_kb = InlineKeyboardMarkup()
+favorites_kb.row(delete_from_favorites_btn)

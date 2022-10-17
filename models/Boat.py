@@ -141,3 +141,17 @@ class Boat(Record):
         return self.__name, self.__price, self.__link, self.__location, self.__year, self.__length, self.__beam, \
                self.__draft, self.__hull_material, self.__fuel_type, self.__other_param, self.__description, \
                self.__photo, self.__category, self.__type, *super().to_db()
+
+    @staticmethod
+    def show(boat: tuple) -> str:
+        boat_param = ["Boat Name", "Price", "Link", "Location", "Year", "Length", "Beam", "Draft", "Hull Material",
+                      "Fuel Type", "Other Param", "Description", "Photo", "Category", "Type"]
+
+        boat_str = f"<b>{boat_param[0]}:</b> <i>{boat[0]}</i>\n"
+        for i in range(1, len(boat_param)):
+            if boat_param[i] == "Price":
+                boat_str += f"<b>{boat_param[i]}:</b> <b>{boat[i]}</b>\n" if not (boat[i] is None) else ""
+            elif not(boat_param[i] == "Link"):
+                boat_str += f"<b>{boat_param[i]}:</b> <i>{boat[i]}</i>\n" if not (boat[i] is None) else ""
+        boat_str += f'<a href="{boat[2]}">Посмотреть на сайте</a>'
+        return boat_str

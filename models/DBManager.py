@@ -10,6 +10,7 @@ class BoatDB:
     _boats_table = "boats"  # название таблицы для хранения лодок
     _users_table = "users"  # название таблицы для хранения пользователей
     _filters_table = "filters"  # название таблицы для хранения фильтров пользователя
+    _favorites_table = "favorites"  # название таблицы для хранения избранных объявлений пользователя
     _db_name: str  # название базы данных
 
     def __init__(self, db_name):
@@ -81,6 +82,15 @@ class BoatDB:
                         FOREIGN KEY(user_id) REFERENCES {self._users_table} (id) ON DELETE CASCADE
                         );""")
 
+    def create_favorites_table(self, cur: Cursor):
+        """Данная функция создает в базе данных таблицу для хранения избранных объявлений пользователя."""
+        cur.execute(f"""CREATE TABLE IF NOT EXISTS {self._favorites_table}(
+                        user_id INTEGER NOT NULL,
+                        link TEXT NOT NULL,
+                        PRIMARY KEY(user_id, link)
+                        FOREIGN KEY(user_id) REFERENCES {self._users_table} (id) ON DELETE CASCADE
+                        );""")
+
     def create_db(self):
         """Данная функция создает базу данных и таблицы в ней. """
         con = sqlite3.connect(self._db_name)
@@ -88,6 +98,7 @@ class BoatDB:
         self.create_boats_table(cur)
         self.create_users_table(cur)
         self.create_filters_table(cur)
+        self.create_favorites_table(cur)
         con.close()
 
     def add_boats(self, boats: list[Boat]):
@@ -139,6 +150,22 @@ class BoatDB:
         cur.execute(f"""REPLACE INTO {self._filters_table} 
                         ({functools.reduce(lambda x, y: x + y + ", ", keys, "")[:-2]})
                         VALUES({functools.reduce(lambda x, y: x + '"' + str(y) + '"' + ', ', values, "")[:-2]})""")
+        con.commit()
+        con.close()
+
+    def add_favorites(self, user_id: int, link: str):
+        """
+            Данная функция добавляет избранное объявление пользователя в таблицу избранного в базе данных.
+
+            Args:
+                user_id: id пользователя.
+                link: ссылка на объявление на сайте(т.к. это PRIMARY KEY таблицы лодок).
+            """
+        con = sqlite3.connect(self._db_name)
+        cur = con.cursor()
+        cur.execute(f"""REPLACE INTO {self._favorites_table} 
+                    (user_id, link)
+                    VALUES("{user_id}", "{link}")""")
         con.commit()
         con.close()
 
@@ -295,14 +322,20 @@ class BoatDB:
         con.close()
         return boats
 
-    @staticmethod
-    def filter_to_dict(boat_filter: tuple) -> dict:
-        filter_key_list = ["user_id", "filter_name", "boat_name", "min_price", "max_price", "location", "min_year",
-                           "max_year", "min_length", "max_length", "min_draft", "max_draft", "hull_material",
-                           "fuel_type", "category", "type"]
-        filter_dict = {}
-        for i in range(len(boat_filter)):
-            if not (boat_filter[i] is None):
-                filter_dict.update({filter_key_list[i]: boat_filter[i]})
+    def get_favorites(self, user_id: int, columns="*"):
+        con = sqlite3.connect(self._db_name)
+        cur = con.cursor()
+        request = f"""SELECT {columns} FROM {self._boats_table} WHERE link IN (SELECT link FROM {self._favorites_table} 
+                   WHERE user_id = "{user_id}");"""
+        res = cur.execute(request)
+        boats = res.fetchall()
+        con.close()
+        return boats
 
-        return filter_dict
+    def delete_favorites(self, user_id: int, link: str):
+        con = sqlite3.connect(self._db_name)
+        cur = con.cursor()
+        request = f"""DELETE FROM {self._favorites_table} WHERE user_id = "{user_id}" AND link = "{link}";"""
+        cur.execute(request)
+        con.commit()
+        con.close()

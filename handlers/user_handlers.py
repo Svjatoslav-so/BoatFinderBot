@@ -6,13 +6,15 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
 from keyboards import user_keyboards as u_kb
+from models.Boat import Boat
 from models.DBManager import BoatDB
+from models.Filter import Filter
 from states import user_states
 
 db = BoatDB(os.environ['database'])
 
 
-async def start(message: Message):
+async def start(message: Message, state: FSMContext):
     db.add_user((message.from_user.id,
                  message.from_user.first_name,
                  message.from_user.last_name,
@@ -20,6 +22,7 @@ async def start(message: Message):
     await message.answer("Приветствую!\nИ так сразу к делу ; )\nЖми /search чтобы начать поиск.\n"
                          "Если тебе нужны настройки тогда переходи в /settings.",
                          reply_markup=u_kb.start_kb)
+    await state.finish()
 
 
 async def search(message: Message):
@@ -33,13 +36,16 @@ async def search(message: Message):
 
 
 async def find(message: Message, state: FSMContext):
-    boat_filter = db.get_filters(message.from_user.id, message.text)[0]
-    await message.answer("Начнем!", reply_markup=ReplyKeyboardRemove())
-    for boat in db.get_boats(db.filter_to_dict(boat_filter)):
-        time.sleep(1.5)
-        await message.answer(str(boat))
-    await message.answer("Кажись все)", reply_markup=u_kb.start_kb)
-    await state.finish()
+    boat_filters = db.get_filters(message.from_user.id, message.text)
+    if len(boat_filters) > 0:
+        await message.answer("Начнем!", reply_markup=ReplyKeyboardRemove())
+        for boat in db.get_boats(Filter.filter_to_dict(boat_filters[0])):
+            time.sleep(1.5)
+            await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
+        await message.answer("Кажись все)", reply_markup=u_kb.start_kb)
+        await state.finish()
+    else:
+        await message.answer(f'У вас нет фильтра с названием "{message.text}".\n Выберите другой фильтр.')
 
 
 async def add_filter(message: Message):
@@ -99,7 +105,7 @@ async def apply(message: Message, state: FSMContext):
     await message.answer("Начнем!", reply_markup=ReplyKeyboardRemove())
     for boat in db.get_boats(boat_filter):
         time.sleep(1.5)
-        await message.answer(str(boat))
+        await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
     await message.answer("Кажись все)", reply_markup=u_kb.start_kb)
     await state.finish()
 
@@ -118,7 +124,7 @@ async def apply_and_save(message: Message, state: FSMContext):
     await message.answer("Начнем!", reply_markup=ReplyKeyboardRemove())
     for boat in db.get_boats(boat_filter):
         time.sleep(1.5)
-        await message.answer(str(boat))
+        await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
     await message.answer("Кажись все)", reply_markup=u_kb.start_kb)
     await state.finish()
 
@@ -144,8 +150,9 @@ async def settings(message: Message):
                          "Если хотите отредактировать фильтр жмите /edit_filter.", reply_markup=u_kb.settings_kb)
 
 
-async def menu(message: Message):
+async def menu(message: Message, state: FSMContext):
     await message.answer("/search -  начать поиск.\n/settings - настройки.", reply_markup=u_kb.start_kb)
+    await state.finish()
 
 
 async def my_filters(message: Message):
@@ -156,21 +163,58 @@ async def my_filters(message: Message):
         await message.answer("Вы еще не сохраняли фильтры")
 
 
+async def my_favorites(message: Message):
+    favorites = db.get_favorites(message.from_user.id)
+    if len(favorites) > 0:
+        await message.answer("Избранное:", reply_markup=u_kb.start_kb)
+        for boat in favorites:
+            time.sleep(1.5)
+            await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.favorites_kb)
+        await message.answer("Кажись все)")
+    else:
+        await message.answer("Вы еще ничего не добавили в избранное")
+
+
 async def show_filter(callback_query: CallbackQuery):
     raw_filters = db.get_filters(callback_query.from_user.id, callback_query.data)
     if len(raw_filters) > 0:
-        boat_filter = db.filter_to_dict(raw_filters[0])
-        await callback_query.answer(str(boat_filter), show_alert=True)
+        boat_filter = Filter.filter_to_dict(raw_filters[0])
+        await callback_query.answer(Filter.show(boat_filter), show_alert=True)
     else:
         await callback_query.answer()
 
 
+async def add_to_favorites(callback_query: CallbackQuery):
+    await callback_query.message.edit_reply_markup(u_kb.boat_kb_2)
+    link = callback_query.message.entities[len(callback_query.message.entities) - 1].url
+    user_id = callback_query.message.chat.id
+    db.add_favorites(user_id, link)
+
+
+async def cancel_favorites(callback_query: CallbackQuery):
+    await callback_query.message.edit_reply_markup(u_kb.boat_kb)
+    link = callback_query.message.entities[len(callback_query.message.entities) - 1].url
+    user_id = callback_query.message.chat.id
+    db.delete_favorites(user_id, link)
+
+
+async def delete_from_favorites(callback_query: CallbackQuery):
+    link = callback_query.message.entities[len(callback_query.message.entities) - 1].url
+    user_id = callback_query.message.chat.id
+    await callback_query.message.delete()
+    db.delete_favorites(user_id, link)
+
+
+async def delete_boat(callback_query: CallbackQuery):
+    # print("delete")
+    await callback_query.message.delete()
+
+
 def register_user_handlers(dp: Dispatcher):
-    dp.register_message_handler(start, commands="start")
+    dp.register_message_handler(start, commands="start", state="*")
     dp.register_message_handler(search, commands="search")
     dp.register_message_handler(add_filter, commands="add_filter", state="*")
     dp.register_message_handler(find, state=user_states.ApplyFilter.SetFilter)
-    dp.register_message_handler(find, commands="find")
     dp.register_message_handler(add_boat_name, commands="boat_name",
                                 state=(user_states.AddFilter.AddFilterParam, user_states.NewFilter.AddFilterParam))
     dp.register_message_handler(set_boat_name,
@@ -188,5 +232,11 @@ def register_user_handlers(dp: Dispatcher):
     dp.register_message_handler(new_filter_name, commands="save_filter", state=user_states.NewFilter.AddFilterParam)
     dp.register_message_handler(save_filter, state=user_states.NewFilter.SetFilterName)
     dp.register_message_handler(my_filters, commands="my_filters")
+    dp.register_message_handler(my_favorites, commands="my_favorites")
 
+    dp.register_callback_query_handler(add_to_favorites, lambda c: c.data == "add_to_favorites")
+    dp.register_callback_query_handler(cancel_favorites, lambda c: c.data == "cancel_favorites")
+    dp.register_callback_query_handler(delete_from_favorites, lambda c: c.data == "delete_from_favorites")
+    dp.register_callback_query_handler(delete_boat, text="delete_boat")
+    # ИЛИ МОЖНО ТАК dp.register_callback_query_handler(delete_boat, lambda c: c.data == "delete_boat")
     dp.register_callback_query_handler(show_filter)
