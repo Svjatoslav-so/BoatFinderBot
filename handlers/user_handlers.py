@@ -20,12 +20,14 @@ async def start(message: Message, state: FSMContext):
                  message.from_user.last_name,
                  message.from_user.username, None, None, None))
     await message.answer("Приветствую!\nИ так сразу к делу ; )\nЖми /search чтобы начать поиск.\n"
+                         "Ваши фильтры и Избранное находятся в /my_data.\n"
                          "Если тебе нужны настройки тогда переходи в /settings.",
                          reply_markup=u_kb.start_kb)
     await state.finish()
 
 
-async def search(message: Message):
+async def search(message: Message, state: FSMContext):
+    await state.finish()
     filters = db.get_filters(message.from_user.id, columns="filter_name")
     if len(filters) <= 0:
         await message.answer("У вас пока нет никаких фильтров. Для того чтобы создать фильтр жми /add_filter.",
@@ -143,15 +145,23 @@ async def save_filter(message: Message, state: FSMContext):
     await state.finish()
 
 
-async def settings(message: Message):
-    await message.answer("Чтобы вернуться обратно нажмите /menu.\n"
-                         "Хотите сохранить новый фильтр жмите /new_filter.\n"
-                         "Чтобы посмотреть свои фильтры жмите /my_filters.\n"
-                         "Если хотите отредактировать фильтр жмите /edit_filter.", reply_markup=u_kb.settings_kb)
+async def settings(message: Message, state: FSMContext):
+    await message.answer("Чтобы вернуться обратно нажмите /menu\n"
+                         "Хотите сохранить новый фильтр жмите /new_filter\n"
+                         "Если хотите отредактировать фильтр жмите /edit_filter", reply_markup=u_kb.settings_kb)
+    await state.finish()
+
+
+async def my_data(message: Message, state: FSMContext):
+    await message.answer("Чтобы вернуться обратно нажмите /menu\n"
+                         "Чтобы посмотреть свои фильтры жмите /my_filters\n"
+                         "Чтобы посмотреть Избранное нажмите /my_favorites", reply_markup=u_kb.my_data_kb)
+    await state.finish()
 
 
 async def menu(message: Message, state: FSMContext):
-    await message.answer("/search -  начать поиск.\n/settings - настройки.", reply_markup=u_kb.start_kb)
+    await message.answer("/search -  начать поиск\n/my_data - посмотреть фильтры и избранное\n/settings - настройки",
+                         reply_markup=u_kb.start_kb)
     await state.finish()
 
 
@@ -166,7 +176,7 @@ async def my_filters(message: Message):
 async def my_favorites(message: Message):
     favorites = db.get_favorites(message.from_user.id)
     if len(favorites) > 0:
-        await message.answer("Избранное:", reply_markup=u_kb.start_kb)
+        await message.answer("Избранное:")
         for boat in favorites:
             time.sleep(1.5)
             await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.favorites_kb)
@@ -212,8 +222,11 @@ async def delete_boat(callback_query: CallbackQuery):
 
 def register_user_handlers(dp: Dispatcher):
     dp.register_message_handler(start, commands="start", state="*")
-    dp.register_message_handler(search, commands="search")
-    dp.register_message_handler(add_filter, commands="add_filter", state="*")
+    dp.register_message_handler(menu, commands="menu", state="*")
+    dp.register_message_handler(search, commands="search", state="*")
+    dp.register_message_handler(settings, commands="settings", state="*")
+    dp.register_message_handler(my_data, commands="my_data", state="*")
+    dp.register_message_handler(add_filter, commands="add_filter", state=(user_states.ApplyFilter.SetFilter, None))
     dp.register_message_handler(find, state=user_states.ApplyFilter.SetFilter)
     dp.register_message_handler(add_boat_name, commands="boat_name",
                                 state=(user_states.AddFilter.AddFilterParam, user_states.NewFilter.AddFilterParam))
@@ -226,8 +239,6 @@ def register_user_handlers(dp: Dispatcher):
     dp.register_message_handler(apply, commands="apply", state=user_states.AddFilter.AddFilterParam)
     dp.register_message_handler(add_filter_name, commands="apply_and_save", state=user_states.AddFilter.AddFilterParam)
     dp.register_message_handler(apply_and_save, state=user_states.AddFilter.SetFilterName)
-    dp.register_message_handler(settings, commands="settings")
-    dp.register_message_handler(menu, commands="menu")
     dp.register_message_handler(new_filter, commands="new_filter")
     dp.register_message_handler(new_filter_name, commands="save_filter", state=user_states.NewFilter.AddFilterParam)
     dp.register_message_handler(save_filter, state=user_states.NewFilter.SetFilterName)

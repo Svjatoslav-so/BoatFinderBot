@@ -13,6 +13,7 @@ def get_filters_kb(btn_name_list: list[str]) -> ReplyKeyboardMarkup:
 search_btn = KeyboardButton("/search")
 add_filter_btn = KeyboardButton("/add_filter")
 settings_btn = KeyboardButton("/settings")
+my_data_btn = KeyboardButton("/my_data")
 
 year_btn = KeyboardButton("/year")
 boat_name_btn = KeyboardButton("/boat_name")
@@ -41,7 +42,7 @@ cancel_favorites_btn = InlineKeyboardButton("Отменить", callback_data="c
 delete_from_favorites_btn = InlineKeyboardButton("Удалить", callback_data="delete_from_favorites")
 
 start_kb = ReplyKeyboardMarkup(resize_keyboard=True)
-start_kb.row(search_btn, settings_btn)
+start_kb.row(search_btn, my_data_btn, settings_btn)
 
 search_kb_1 = ReplyKeyboardMarkup(resize_keyboard=True)
 search_kb_1.row(add_filter_btn)
@@ -64,8 +65,10 @@ new_filter_kb.row(price_btn)
 new_filter_kb.row(save_filter_btn)
 
 settings_kb = ReplyKeyboardMarkup(resize_keyboard=True)
-settings_kb.row(menu_btn, my_filters_btn, my_favorites_btn)
-settings_kb.row(new_filter_btn, edit_filter_btn)
+settings_kb.row(menu_btn, new_filter_btn, edit_filter_btn)
+
+my_data_kb = ReplyKeyboardMarkup(resize_keyboard=True)
+my_data_kb.row(menu_btn, my_filters_btn, my_favorites_btn)
 
 
 def get_my_filters_kb(filters):
