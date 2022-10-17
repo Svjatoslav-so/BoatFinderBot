@@ -10,10 +10,10 @@ def get_filters_kb(btn_name_list: list[str]) -> ReplyKeyboardMarkup:
     return kb
 
 
-search_btn = KeyboardButton("/search")
-add_filter_btn = KeyboardButton("/add_filter")
-settings_btn = KeyboardButton("/settings")
-my_data_btn = KeyboardButton("/my_data")
+search_btn = KeyboardButton("🔎")
+add_filter_btn = KeyboardButton("/add🎛")
+settings_btn = KeyboardButton("⚙")
+my_data_btn = KeyboardButton("💾")
 
 year_btn = KeyboardButton("/year")
 boat_name_btn = KeyboardButton("/boat_name")
@@ -28,11 +28,11 @@ boat_type_btn = KeyboardButton("/boat_type")
 apply_btn = KeyboardButton("/apply")
 apply_and_save_btn = KeyboardButton("/apply_and_save")
 
-menu_btn = KeyboardButton("/menu")
-new_filter_btn = KeyboardButton("/new_filter")
-my_filters_btn = KeyboardButton("/my_filters")
-edit_filter_btn = KeyboardButton("/edit_filter")
-my_favorites_btn = KeyboardButton("/my_favorites")
+menu_btn = KeyboardButton("🏠")
+new_filter_btn = KeyboardButton("/new🎛")
+my_filters_btn = KeyboardButton("🎛")
+edit_filter_btn = KeyboardButton("/edit🎛")
+my_favorites_btn = KeyboardButton("⭐")
 
 save_filter_btn = KeyboardButton("/save_filter")
 
@@ -40,6 +40,9 @@ add_to_favorites_btn = InlineKeyboardButton("В избранное", callback_da
 delete_boat_btn = InlineKeyboardButton("Удалить", callback_data="delete_boat")
 cancel_favorites_btn = InlineKeyboardButton("Отменить", callback_data="cancel_favorites")
 delete_from_favorites_btn = InlineKeyboardButton("Удалить", callback_data="delete_from_favorites")
+
+next_page_btn = InlineKeyboardButton("Next", callback_data="next_page")
+cancel_page_btn = InlineKeyboardButton("Завершить", callback_data="cancel_page")
 
 start_kb = ReplyKeyboardMarkup(resize_keyboard=True)
 start_kb.row(search_btn, my_data_btn, settings_btn)
@@ -87,3 +90,6 @@ boat_kb_2.row(cancel_favorites_btn, delete_boat_btn)
 
 favorites_kb = InlineKeyboardMarkup()
 favorites_kb.row(delete_from_favorites_btn)
+
+next_kb = InlineKeyboardMarkup()
+next_kb.row(cancel_page_btn, next_page_btn)

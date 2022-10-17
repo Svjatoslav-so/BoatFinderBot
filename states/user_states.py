@@ -17,3 +17,7 @@ class NewFilter(StatesGroup):
     SetBoatName = State()
     SetFilterName = State()
     SetLocation = State()
+
+
+class ShowBoats(StatesGroup):
+    Next = State()

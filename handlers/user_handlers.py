@@ -1,3 +1,4 @@
+import math
 import os
 import time
 
@@ -19,9 +20,9 @@ async def start(message: Message, state: FSMContext):
                  message.from_user.first_name,
                  message.from_user.last_name,
                  message.from_user.username, None, None, None))
-    await message.answer("Приветствую!\nИ так сразу к делу ; )\nЖми /search чтобы начать поиск.\n"
-                         "Ваши фильтры и Избранное находятся в /my_data.\n"
-                         "Если тебе нужны настройки тогда переходи в /settings.",
+    await message.answer("Приветствую!\nИ так сразу к делу ; )\nЖми 🔎 чтобы начать поиск.\n"
+                         "Ваши фильтры и Избранное находятся в 💾.\n"
+                         "Если тебе нужны настройки тогда переходи в ⚙.",
                          reply_markup=u_kb.start_kb)
     await state.finish()
 
@@ -41,11 +42,22 @@ async def find(message: Message, state: FSMContext):
     boat_filters = db.get_filters(message.from_user.id, message.text)
     if len(boat_filters) > 0:
         await message.answer("Начнем!", reply_markup=ReplyKeyboardRemove())
-        for boat in db.get_boats(Filter.filter_to_dict(boat_filters[0])):
-            time.sleep(1.5)
-            await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
-        await message.answer("Кажись все)", reply_markup=u_kb.start_kb)
-        await state.finish()
+        boats = db.get_boats(Filter.filter_to_dict(boat_filters[0]))
+        if len(boats) == 0:
+            await message.answer(f"Не найдены лодки удовлетворяющие фильтру:\n"
+                                 f"{Filter.show(Filter.filter_to_dict(boat_filters[0]))}", reply_markup=u_kb.start_kb)
+        elif len(boats) > 10:
+            for boat in boats[:10]:
+                await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
+            pages = math.ceil(len(boats) / 10)
+            await message.answer(f"Cтраница 1 из {pages}", reply_markup=u_kb.next_kb)
+            await user_states.ShowBoats.Next.set()
+            await state.update_data({"boats": boats[10:], "pages": pages, "c_page": 1})
+        else:
+            for boat in boats:
+                await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
+            await message.answer("Кажись все)", reply_markup=u_kb.start_kb)
+            await state.finish()
     else:
         await message.answer(f'У вас нет фильтра с названием "{message.text}".\n Выберите другой фильтр.')
 
@@ -105,11 +117,22 @@ async def set_location(message: Message, state: FSMContext):
 async def apply(message: Message, state: FSMContext):
     boat_filter = await state.get_data()
     await message.answer("Начнем!", reply_markup=ReplyKeyboardRemove())
-    for boat in db.get_boats(boat_filter):
-        time.sleep(1.5)
-        await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
-    await message.answer("Кажись все)", reply_markup=u_kb.start_kb)
-    await state.finish()
+    boats = db.get_boats(boat_filter)
+    if len(boats) == 0:
+        await message.answer(f"Не найдены лодки удовлетворяющие фильтру:\n{Filter.show(boat_filter)}",
+                             reply_markup=u_kb.start_kb)
+    elif len(boats) > 10:
+        for boat in boats[:10]:
+            await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
+        pages = math.ceil(len(boats) / 10)
+        await message.answer(f"Cтраница 1 из {pages}", reply_markup=u_kb.next_kb)
+        await user_states.ShowBoats.Next.set()
+        await state.update_data({"boats": boats[10:], "pages": pages, "c_page": 1})
+    else:
+        for boat in boats:
+            await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
+        await message.answer("Кажись все)", reply_markup=u_kb.start_kb)
+        await state.finish()
 
 
 async def add_filter_name(message: Message, state: FSMContext):
@@ -124,11 +147,22 @@ async def apply_and_save(message: Message, state: FSMContext):
     db.add_filter(boat_filter)
     await message.answer("Фильтр успешно сохранен!")
     await message.answer("Начнем!", reply_markup=ReplyKeyboardRemove())
-    for boat in db.get_boats(boat_filter):
-        time.sleep(1.5)
-        await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
-    await message.answer("Кажись все)", reply_markup=u_kb.start_kb)
-    await state.finish()
+    boats = db.get_boats(boat_filter)
+    if len(boats) == 0:
+        await message.answer(f"Не найдены лодки удовлетворяющие фильтру:\n{Filter.show(boat_filter)}",
+                             reply_markup=u_kb.start_kb)
+    elif len(boats) > 10:
+        for boat in boats[:10]:
+            await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
+        pages = math.ceil(len(boats) / 10)
+        await message.answer(f"Cтраница 1 из {pages}", reply_markup=u_kb.next_kb)
+        await user_states.ShowBoats.Next.set()
+        await state.update_data({"boats": boats[10:], "pages": pages, "c_page": 1})
+    else:
+        for boat in boats:
+            await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
+        await message.answer("Кажись все)", reply_markup=u_kb.start_kb)
+        await state.finish()
 
 
 async def new_filter_name(message: Message, state: FSMContext):
@@ -146,21 +180,21 @@ async def save_filter(message: Message, state: FSMContext):
 
 
 async def settings(message: Message, state: FSMContext):
-    await message.answer("Чтобы вернуться обратно нажмите /menu\n"
-                         "Хотите сохранить новый фильтр жмите /new_filter\n"
-                         "Если хотите отредактировать фильтр жмите /edit_filter", reply_markup=u_kb.settings_kb)
+    await message.answer("Чтобы вернуться обратно нажмите 🏠\n"
+                         "Хотите сохранить новый фильтр жмите / new🎛\n"
+                         "Если хотите отредактировать фильтр жмите / edit🎛", reply_markup=u_kb.settings_kb)
     await state.finish()
 
 
 async def my_data(message: Message, state: FSMContext):
-    await message.answer("Чтобы вернуться обратно нажмите /menu\n"
-                         "Чтобы посмотреть свои фильтры жмите /my_filters\n"
-                         "Чтобы посмотреть Избранное нажмите /my_favorites", reply_markup=u_kb.my_data_kb)
+    await message.answer("Чтобы вернуться обратно нажмите 🏠\n"
+                         "Чтобы посмотреть свои фильтры жмите 🎛\n"
+                         "Чтобы посмотреть Избранное нажмите ⭐", reply_markup=u_kb.my_data_kb)
     await state.finish()
 
 
 async def menu(message: Message, state: FSMContext):
-    await message.answer("/search -  начать поиск\n/my_data - посмотреть фильтры и избранное\n/settings - настройки",
+    await message.answer("🔎 -  начать поиск\n💾 - посмотреть фильтры и избранное\n⚙ - настройки",
                          reply_markup=u_kb.start_kb)
     await state.finish()
 
@@ -220,13 +254,43 @@ async def delete_boat(callback_query: CallbackQuery):
     await callback_query.message.delete()
 
 
+async def next_page(callback_query: CallbackQuery, state: FSMContext):
+    data = await state.get_data("boats")
+    boats = data.get("boats")
+    pages = data.get("pages")
+    c_page = data.get("c_page")
+    c_page += 1
+    await callback_query.message.edit_reply_markup(None)
+    if len(boats) > 10:
+        for boat in boats[:10]:
+            await callback_query.message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
+        await callback_query.message.answer(f"Cтраница {c_page} из {pages}", reply_markup=u_kb.next_kb)
+        await state.update_data({"boats": boats[10:], "c_page": {c_page}})
+    else:
+        for boat in boats:
+            await callback_query.message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
+        await callback_query.message.answer(f"Cтраница {c_page} из {pages}\nКажись все)", reply_markup=u_kb.start_kb)
+        await state.finish()
+
+
+async def cancel_page(callback_query: CallbackQuery, state: FSMContext):
+    await callback_query.message.edit_reply_markup(None)
+    await state.finish()
+    await callback_query.message.answer("Вывод данных завершен...", reply_markup=u_kb.start_kb)
+
+
+async def print_message(message: Message):
+    print(message)
+
+
 def register_user_handlers(dp: Dispatcher):
     dp.register_message_handler(start, commands="start", state="*")
-    dp.register_message_handler(menu, commands="menu", state="*")
-    dp.register_message_handler(search, commands="search", state="*")
-    dp.register_message_handler(settings, commands="settings", state="*")
-    dp.register_message_handler(my_data, commands="my_data", state="*")
-    dp.register_message_handler(add_filter, commands="add_filter", state=(user_states.ApplyFilter.SetFilter, None))
+    dp.register_message_handler(menu, lambda m: m.text == "🏠" or m.text == "/menu", state="*")
+    dp.register_message_handler(search, lambda m: m.text == "🔎" or m.text == "/search", state="*")
+    dp.register_message_handler(settings, lambda m: m.text == "⚙" or m.text == "/settings", state="*")
+    dp.register_message_handler(my_data, lambda m: m.text == "💾" or m.text == "/my_data", state="*")
+    dp.register_message_handler(add_filter, commands=["add_filter", "add🎛"],
+                                state=(user_states.ApplyFilter.SetFilter, None))
     dp.register_message_handler(find, state=user_states.ApplyFilter.SetFilter)
     dp.register_message_handler(add_boat_name, commands="boat_name",
                                 state=(user_states.AddFilter.AddFilterParam, user_states.NewFilter.AddFilterParam))
@@ -239,15 +303,19 @@ def register_user_handlers(dp: Dispatcher):
     dp.register_message_handler(apply, commands="apply", state=user_states.AddFilter.AddFilterParam)
     dp.register_message_handler(add_filter_name, commands="apply_and_save", state=user_states.AddFilter.AddFilterParam)
     dp.register_message_handler(apply_and_save, state=user_states.AddFilter.SetFilterName)
-    dp.register_message_handler(new_filter, commands="new_filter")
+    dp.register_message_handler(new_filter, commands=["new_filter", "new🎛"])
     dp.register_message_handler(new_filter_name, commands="save_filter", state=user_states.NewFilter.AddFilterParam)
     dp.register_message_handler(save_filter, state=user_states.NewFilter.SetFilterName)
-    dp.register_message_handler(my_filters, commands="my_filters")
-    dp.register_message_handler(my_favorites, commands="my_favorites")
+    dp.register_message_handler(my_filters, lambda m: m.text == "🎛" or m.text == "/my_filters")
+    dp.register_message_handler(my_favorites, lambda m: m.text == "⭐" or m.text == "/my_favorites")
+
+    dp.register_message_handler(print_message)
 
     dp.register_callback_query_handler(add_to_favorites, lambda c: c.data == "add_to_favorites")
     dp.register_callback_query_handler(cancel_favorites, lambda c: c.data == "cancel_favorites")
     dp.register_callback_query_handler(delete_from_favorites, lambda c: c.data == "delete_from_favorites")
     dp.register_callback_query_handler(delete_boat, text="delete_boat")
+    dp.register_callback_query_handler(next_page, text="next_page", state=user_states.ShowBoats.Next)
+    dp.register_callback_query_handler(cancel_page, text="cancel_page", state=user_states.ShowBoats.Next)
     # ИЛИ МОЖНО ТАК dp.register_callback_query_handler(delete_boat, lambda c: c.data == "delete_boat")
     dp.register_callback_query_handler(show_filter)

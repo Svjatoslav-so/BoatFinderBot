@@ -16,7 +16,7 @@ class Filter:
     def show(boat_filter: dict) -> str:
         key = set(boat_filter.keys())
         key = key - {"user_id", "filter_name"}
-        f_str = f"{boat_filter['filter_name'].upper()}\n"
+        f_str = f"{boat_filter['filter_name'].upper()}\n" if 'filter_name' in boat_filter.keys() else ""
         for k in key:
             f_str += k.title().replace("_", " ")+": "+boat_filter[k]+"\n"
         return f_str
