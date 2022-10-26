@@ -15,6 +15,7 @@ class AddFilter(StatesGroup):
     SetMaxPrice = State()
     SavePrice = State()
     SetHullMaterial = State()
+    SetCategory = State()
 
 
 class NewFilter(StatesGroup):
@@ -27,6 +28,7 @@ class NewFilter(StatesGroup):
     SetMaxPrice = State()
     SavePrice = State()
     SetHullMaterial = State()
+    SetCategory = State()
 
 
 class ShowBoats(StatesGroup):

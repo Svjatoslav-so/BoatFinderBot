@@ -102,9 +102,9 @@ next_kb = InlineKeyboardMarkup()
 next_kb.row(cancel_page_btn, next_page_btn)
 
 
-def get_hull_material_kb(materials: list):
+def get_something_kb(something_list: list):
     kb = ReplyKeyboardMarkup(resize_keyboard=True, row_width=3)
-    for m in materials:
+    for m in something_list:
         if not(m in [None]):
             btn = KeyboardButton(str(m))
             kb.insert(btn)
