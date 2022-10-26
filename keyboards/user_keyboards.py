@@ -36,6 +36,10 @@ my_favorites_btn = KeyboardButton("⭐")
 
 save_filter_btn = KeyboardButton("/save_filter")
 
+min_price_btn = KeyboardButton("/min_price")
+max_price_btn = KeyboardButton("/max_price")
+save_price_btn = KeyboardButton("/save_price")
+
 add_to_favorites_btn = InlineKeyboardButton("В избранное", callback_data="add_to_favorites")
 delete_boat_btn = InlineKeyboardButton("Удалить", callback_data="delete_boat")
 cancel_favorites_btn = InlineKeyboardButton("Отменить", callback_data="cancel_favorites")
@@ -72,6 +76,9 @@ settings_kb.row(menu_btn, new_filter_btn, edit_filter_btn)
 
 my_data_kb = ReplyKeyboardMarkup(resize_keyboard=True)
 my_data_kb.row(menu_btn, my_filters_btn, my_favorites_btn)
+
+price_kb = ReplyKeyboardMarkup(resize_keyboard=True)
+price_kb.row(min_price_btn, max_price_btn, save_price_btn)
 
 
 def get_my_filters_kb(filters):

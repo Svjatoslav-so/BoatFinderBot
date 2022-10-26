@@ -10,6 +10,10 @@ class AddFilter(StatesGroup):
     SetBoatName = State()
     SetFilterName = State()
     SetLocation = State()
+    AddPrice = State()
+    SetMinPrice = State()
+    SetMaxPrice = State()
+    SavePrice = State()
 
 
 class NewFilter(StatesGroup):
@@ -17,6 +21,10 @@ class NewFilter(StatesGroup):
     SetBoatName = State()
     SetFilterName = State()
     SetLocation = State()
+    AddPrice = State()
+    SetMinPrice = State()
+    SetMaxPrice = State()
+    SavePrice = State()
 
 
 class ShowBoats(StatesGroup):

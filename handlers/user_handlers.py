@@ -117,6 +117,72 @@ async def set_location(message: Message, state: FSMContext):
         await user_states.NewFilter.AddFilterParam.set()
 
 
+async def add_price(message: Message, state: FSMContext):
+    await message.answer("Установите минимальную и максимальную цены, чтобы завершить жмите /save_price",
+                         reply_markup=u_kb.price_kb)
+    if await state.get_state() == user_states.AddFilter.AddFilterParam.state:
+        await user_states.AddFilter.AddPrice.set()
+    else:
+        await user_states.NewFilter.AddPrice.set()
+
+
+async def set_price(message: Message, state: FSMContext):
+    if message.text == "/min_price":
+        await message.answer("Введите минимальную цену(число):")
+        if await state.get_state() == user_states.AddFilter.AddPrice.state:
+            await user_states.AddFilter.SetMinPrice.set()
+        else:
+            await user_states.NewFilter.SetMinPrice.set()
+    elif message.text == "/max_price":
+        await message.answer("Введите максимальную цену(число):")
+        if await state.get_state() == user_states.AddFilter.AddPrice.state:
+            await user_states.AddFilter.SetMaxPrice.set()
+        else:
+            await user_states.NewFilter.SetMaxPrice.set()
+    elif message.text == "/save_price":
+        await message.answer("Цена сохранена!")
+        if await state.get_state() == user_states.AddFilter.AddPrice.state:
+            await message.answer("Выберите какие параметры вы хотите настроить. Чтобы применить выберите /apply или"
+                                 " /apply_and_save, чтобы сохранить этот фильтр.", reply_markup=u_kb.add_filter_kb)
+            await user_states.AddFilter.AddFilterParam.set()
+        else:
+            await message.answer("Выберите какие параметры вы хотите настроить. Чтобы применить жмите /save_filter",
+                                 reply_markup=u_kb.new_filter_kb)
+            await user_states.NewFilter.AddFilterParam.set()
+    else:
+        await message.delete()
+        await message.answer("Установите минимальную и максимальную цены, чтобы завершить жмите /save_price",
+                             reply_markup=u_kb.price_kb)
+
+
+async def set_min_price(message: Message, state: FSMContext):
+    try:
+        min_price = float(message.text)
+        min_price = 0.0 if min_price < 0 else min_price
+    except ValueError:
+        min_price = 0.0
+    await state.update_data({"min_price": min_price})
+    if await state.get_state() == user_states.AddFilter.SetMinPrice.state:
+        await user_states.AddFilter.AddPrice.set()
+    else:
+        await user_states.NewFilter.AddPrice.set()
+    await message.answer("Минимальная цена установлена!", reply_markup=u_kb.price_kb)
+
+
+async def set_max_price(message: Message, state: FSMContext):
+    try:
+        max_price = float(message.text)
+        max_price = 10000000 if max_price < 0 else max_price
+    except ValueError:
+        max_price = 10000000
+    await state.update_data({"max_price": max_price})
+    if await state.get_state() == user_states.AddFilter.SetMaxPrice.state:
+        await user_states.AddFilter.AddPrice.set()
+    else:
+        await user_states.NewFilter.AddPrice.set()
+    await message.answer("Максимальная цена установлена!", reply_markup=u_kb.price_kb)
+
+
 async def apply(message: Message, state: FSMContext):
     boat_filter = await state.get_data()
     await message.answer("Начнем!", reply_markup=ReplyKeyboardRemove())
@@ -237,7 +303,7 @@ async def show_filter(callback_query: CallbackQuery):
         boat_filter = Filter.filter_to_dict(raw_filters[0])
         await callback_query.answer(Filter.show(boat_filter), show_alert=True)
     else:
-        await callback_query.answer()
+        await callback_query.answer(f"Фильтр {callback_query.data} не найден (", show_alert=True)
 
 
 async def add_to_favorites(callback_query: CallbackQuery):
@@ -267,7 +333,7 @@ async def delete_boat(callback_query: CallbackQuery):
 
 
 async def next_page(callback_query: CallbackQuery, state: FSMContext):
-    data = await state.get_data() #"boats"
+    data = await state.get_data()  # "boats"
     boats = data.get("boats")
     pages = data.get("pages")
     c_page = data.get("c_page")
@@ -295,6 +361,10 @@ async def print_message(message: Message):
     print(message)
 
 
+async def empty_callback(callback_query: CallbackQuery, state: FSMContext):
+    await callback_query.answer("Данная кнопка уже не активна")
+
+
 def register_user_handlers(dp: Dispatcher):
     dp.register_message_handler(start, commands="start", state="*")
     dp.register_message_handler(menu, lambda m: m.text == "🏠" or m.text == "/menu", state="*")
@@ -312,6 +382,13 @@ def register_user_handlers(dp: Dispatcher):
                                 state=(user_states.AddFilter.AddFilterParam, user_states.NewFilter.AddFilterParam))
     dp.register_message_handler(set_location,
                                 state=(user_states.AddFilter.SetLocation, user_states.NewFilter.SetLocation))
+    dp.register_message_handler(add_price, commands="price",
+                                state=(user_states.AddFilter.AddFilterParam, user_states.NewFilter.AddFilterParam))
+    dp.register_message_handler(set_price, state=(user_states.AddFilter.AddPrice, user_states.NewFilter.AddPrice))
+    dp.register_message_handler(set_min_price,
+                                state=(user_states.AddFilter.SetMinPrice, user_states.NewFilter.SetMinPrice))
+    dp.register_message_handler(set_max_price,
+                                state=(user_states.AddFilter.SetMaxPrice, user_states.NewFilter.SetMaxPrice))
     dp.register_message_handler(apply, commands="apply", state=user_states.AddFilter.AddFilterParam)
     dp.register_message_handler(add_filter_name, commands="apply_and_save", state=user_states.AddFilter.AddFilterParam)
     dp.register_message_handler(apply_and_save, state=user_states.AddFilter.SetFilterName)
@@ -327,7 +404,10 @@ def register_user_handlers(dp: Dispatcher):
     dp.register_callback_query_handler(cancel_favorites, lambda c: c.data == "cancel_favorites", state="*")
     dp.register_callback_query_handler(delete_from_favorites, lambda c: c.data == "delete_from_favorites", state="*")
     dp.register_callback_query_handler(delete_boat, text="delete_boat", state="*")
+    # ИЛИ МОЖНО ТАК dp.register_callback_query_handler(delete_boat, lambda c: c.data == "delete_boat")
     dp.register_callback_query_handler(next_page, text="next_page", state=user_states.ShowBoats.Next)
     dp.register_callback_query_handler(cancel_page, text="cancel_page", state=user_states.ShowBoats.Next)
-    # ИЛИ МОЖНО ТАК dp.register_callback_query_handler(delete_boat, lambda c: c.data == "delete_boat")
-    dp.register_callback_query_handler(show_filter)
+    dp.register_callback_query_handler(show_filter,
+                                       lambda c: not (c.data == "next_page") and not (c.data == "cancel_page"),
+                                       state="*")  # если появятся новые инлайн кнопки добавлять в исключения
+    dp.register_callback_query_handler(empty_callback, state="*")
