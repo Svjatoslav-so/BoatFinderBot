@@ -122,7 +122,7 @@ async def add_hull_material(message: Message, state: FSMContext):
         await message.answer("Выберите материал корпуса:",
                              reply_markup=u_kb.get_something_kb(materials))
     else:
-        await message.answer("Введите интерисующий вас материал корпуса:")
+        await message.answer("Введите интересующий вас материал корпуса:")
     if await state.get_state() == user_states.AddFilter.AddFilterParam.state:
         await user_states.AddFilter.SetHullMaterial.set()
     else:
@@ -147,7 +147,7 @@ async def add_category(message: Message, state: FSMContext):
         await message.answer("Выберите категорию:",
                              reply_markup=u_kb.get_something_kb(categories))
     else:
-        await message.answer("Введите интерисующую вас категорию:")
+        await message.answer("Введите интересующую вас категорию:")
     if await state.get_state() == user_states.AddFilter.AddFilterParam.state:
         await user_states.AddFilter.SetCategory.set()
     else:
@@ -164,3 +164,30 @@ async def set_category(message: Message, state: FSMContext):
         await message.answer("Выберите какие параметры вы хотите настроить. Чтобы применить жмите /save_filter",
                              reply_markup=u_kb.new_filter_kb)
         await user_states.NewFilter.AddFilterParam.set()
+
+
+async def add_fuel_type(message: Message, state: FSMContext):
+    fuel_types = db.get_something_distinct("fuel_type")
+    if len(fuel_types) > 0:
+        await message.answer("Выберите топливо:",
+                             reply_markup=u_kb.get_something_kb(fuel_types))
+    else:
+        await message.answer("Введите интересующее вас топливо:")
+    if await state.get_state() == user_states.AddFilter.AddFilterParam.state:
+        await user_states.AddFilter.SetFuelType.set()
+    else:
+        await user_states.NewFilter.SetFuelType.set()
+
+
+async def set_fuel_type(message: Message, state: FSMContext):
+    await state.update_data({"fuel_type": message.text})
+    if await state.get_state() == user_states.AddFilter.SetFuelType.state:
+        await message.answer("Выберите какие параметры вы хотите настроить. Чтобы применить выберите /apply или"
+                             " /apply_and_save, чтобы сохранить этот фильтр.", reply_markup=u_kb.add_filter_kb)
+        await user_states.AddFilter.AddFilterParam.set()
+    else:
+        await message.answer("Выберите какие параметры вы хотите настроить. Чтобы применить жмите /save_filter",
+                             reply_markup=u_kb.new_filter_kb)
+        await user_states.NewFilter.AddFilterParam.set()
+
+

@@ -16,6 +16,7 @@ class AddFilter(StatesGroup):
     SavePrice = State()
     SetHullMaterial = State()
     SetCategory = State()
+    SetFuelType = State()
 
 
 class NewFilter(StatesGroup):
@@ -29,6 +30,7 @@ class NewFilter(StatesGroup):
     SavePrice = State()
     SetHullMaterial = State()
     SetCategory = State()
+    SetFuelType = State()
 
 
 class ShowBoats(StatesGroup):

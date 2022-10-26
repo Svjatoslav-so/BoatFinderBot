@@ -291,6 +291,11 @@ def register_user_handlers(dp: Dispatcher):
                                 state=(user_states.AddFilter.AddFilterParam, user_states.NewFilter.AddFilterParam))
     dp.register_message_handler(fh.set_category,
                                 state=(user_states.AddFilter.SetCategory, user_states.NewFilter.SetCategory))
+    dp.register_message_handler(fh.add_fuel_type, commands="fuel_type",
+                                state=(user_states.AddFilter.AddFilterParam, user_states.NewFilter.AddFilterParam))
+    dp.register_message_handler(fh.set_fuel_type,
+                                state=(user_states.AddFilter.SetFuelType, user_states.NewFilter.SetFuelType))
+
     dp.register_message_handler(apply, commands="apply", state=user_states.AddFilter.AddFilterParam)
     dp.register_message_handler(add_filter_name, commands="apply_and_save", state=user_states.AddFilter.AddFilterParam)
     dp.register_message_handler(apply_and_save, state=user_states.AddFilter.SetFilterName)
