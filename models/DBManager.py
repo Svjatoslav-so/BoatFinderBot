@@ -29,7 +29,8 @@ class BoatDB:
         """Данная функция создает в базе данных таблицу для хранения лодок."""
         cur.execute(f"""CREATE TABLE IF NOT EXISTS {self._boats_table}(
                         title TEXT NOT NULL,
-                        price REAL,
+                        price TEXT,
+                        price_num REAL,
                         link TEXT PRIMARY KEY NOT NULL,
                         location TEXT,
                         year INTEGER,
@@ -240,6 +241,30 @@ class BoatDB:
         return ""
 
     @staticmethod
+    def __location_filter(boat_filter: dict, filter_name: str = "location", param_name: str = "location") -> str | None:
+        """
+        Вспомогательная функция, используется для добавления фильтрации поля location таблицы лодок в SQL-запросы.
+
+        Args:
+            boat_filter: словарь, описывающий применяемый фильтр.
+            filter_name: название параметра фильтра, который мы хотим преобразовать в SQL-фильтр.
+                         Название должно быть из множества названий столбцов в таблице фильтра в базе данных.
+            param_name:  название параметра лодки на который наклабывается фильтр. Название должно быть из множества
+                         названий столбцов в таблице лодок в базе данных.
+
+        Returns:
+            Функция возвращает строку(часть SQL-запроса, отвечающую за фильтрацию иказанного параметра), если фильтр на
+            указанный параметр есть в словаре boat_filter. Если его нет, тогда пустую строку.
+        """
+        if filter_name in boat_filter.keys():
+            keyword_list = boat_filter[filter_name].split()
+            pattern = ""
+            for kw in keyword_list:
+                pattern += f"%{kw}"
+            return f"{param_name} LIKE '{pattern}%' AND "
+        return ""
+
+    @staticmethod
     def __text_filter(boat_filter: dict, filter_name: str, param_name: str) -> str | None:
         """
         Вспомогательная функция, используется для добавления фильтрации текстовых полей таблицы лодок в SQL-запросы.
@@ -286,7 +311,7 @@ class BoatDB:
             return f"{param_name} <= {boat_filter[to_filter_name]} AND "
         return ""
 
-    def get_boats(self, boat_filter: dict, columns: str = "*") -> list[tuple]:
+    def get_boats(self, boat_filter: dict, columns: str = "*") -> list[dict]:
         """
         Данная функция ищет лодки удовлетворяющие фильтру в таблице лодок.
 
@@ -295,7 +320,7 @@ class BoatDB:
             columns: строка содержащая названия столбцов таблицы лодок, значения которых мы хотим получить.
                      По умолчанию "*" - все столбцы.
         Returns:
-            Функция возвращает список кортежей со значениями столбцов из таблицы лобок указанных в columns.
+            Функция возвращает список словарей со значениями столбцов из таблицы лобок указанных в columns.
         """
         con = sqlite3.connect(self._db_name)
         cur = con.cursor()
@@ -304,12 +329,12 @@ class BoatDB:
             request += " WHERE "
 
             request += self.__boat_name_filter(boat_filter, "boat_name", "title")
-            request += self.__text_filter(boat_filter, "location", "location")
+            request += self.__location_filter(boat_filter, "location", "location")
             request += self.__text_filter(boat_filter, "hull_material", "hull_material")
             request += self.__text_filter(boat_filter, "fuel_type", "fuel_type")
             request += self.__text_filter(boat_filter, "category", "category")
             request += self.__text_filter(boat_filter, "type", "type")
-            request += self.__range_filter(boat_filter, "min_price", "max_price", "price")
+            request += self.__range_filter(boat_filter, "min_price", "max_price", "price_num")
             request += self.__range_filter(boat_filter, "min_year", "max_year", "year")
             request += self.__range_filter(boat_filter, "min_length", "max_length", "length")
             request += self.__range_filter(boat_filter, "min_draft", "max_draft", "draft")
@@ -320,9 +345,10 @@ class BoatDB:
         res = cur.execute(request)
         boats = res.fetchall()
         con.close()
-        return boats
 
-    def get_favorites(self, user_id: int, columns="*"):
+        return self.boats_from_tuple_to_dict(boats, columns)
+
+    def get_favorites(self, user_id: int, columns="*") -> list[dict]:
         con = sqlite3.connect(self._db_name)
         cur = con.cursor()
         request = f"""SELECT {columns} FROM {self._boats_table} WHERE link IN (SELECT link FROM {self._favorites_table} 
@@ -330,7 +356,7 @@ class BoatDB:
         res = cur.execute(request)
         boats = res.fetchall()
         con.close()
-        return boats
+        return self.boats_from_tuple_to_dict(boats, columns)
 
     def delete_favorites(self, user_id: int, link: str):
         con = sqlite3.connect(self._db_name)
@@ -339,3 +365,19 @@ class BoatDB:
         cur.execute(request)
         con.commit()
         con.close()
+
+    @staticmethod
+    def boats_from_tuple_to_dict(boats: list[tuple], columns: str) -> list[dict]:
+        if columns == "*":
+            keys = ["title", "price", "price_num", "link", "location", "year", "length", "beam", "draft",
+                    "hull_material",
+                    "fuel_type", "other_param", "description", "photo", "category", "type", "ad_status", "date"]
+        else:
+            keys = [i.replace(",", "") for i in columns.split()]
+        boats_dict_list = []
+        for boat in boats:
+            boats_dict = {}
+            for i in range(len(boat)):
+                boats_dict.update({keys[i]: boat[i]})
+            boats_dict_list.append(boats_dict)
+        return boats_dict_list

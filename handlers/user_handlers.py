@@ -46,6 +46,7 @@ async def find(message: Message, state: FSMContext):
         if len(boats) == 0:
             await message.answer(f"Не найдены лодки удовлетворяющие фильтру:\n"
                                  f"{Filter.show(Filter.filter_to_dict(boat_filters[0]))}", reply_markup=u_kb.start_kb)
+            await state.finish()
         elif len(boats) > 10:
             for boat in boats[:10]:
                 await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
@@ -59,7 +60,9 @@ async def find(message: Message, state: FSMContext):
             await message.answer("Кажись все)", reply_markup=u_kb.start_kb)
             await state.finish()
     else:
-        await message.answer(f'У вас нет фильтра с названием "{message.text}".\n Выберите другой фильтр.')
+        filters = db.get_filters(message.from_user.id, columns="filter_name")
+        await message.answer(f'У вас нет фильтра с названием "{message.text}".\n Выберите другой фильтр.',
+                             reply_markup=u_kb.get_filters_kb(filters))
 
 
 async def add_filter(message: Message):
@@ -121,6 +124,7 @@ async def apply(message: Message, state: FSMContext):
     if len(boats) == 0:
         await message.answer(f"Не найдены лодки удовлетворяющие фильтру:\n{Filter.show(boat_filter)}",
                              reply_markup=u_kb.start_kb)
+        await state.finish()
     elif len(boats) > 10:
         for boat in boats[:10]:
             await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
@@ -151,6 +155,7 @@ async def apply_and_save(message: Message, state: FSMContext):
     if len(boats) == 0:
         await message.answer(f"Не найдены лодки удовлетворяющие фильтру:\n{Filter.show(boat_filter)}",
                              reply_markup=u_kb.start_kb)
+        await state.finish()
     elif len(boats) > 10:
         for boat in boats[:10]:
             await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
@@ -207,14 +212,21 @@ async def my_filters(message: Message):
         await message.answer("Вы еще не сохраняли фильтры")
 
 
-async def my_favorites(message: Message):
+async def my_favorites(message: Message, state: FSMContext):
     favorites = db.get_favorites(message.from_user.id)
     if len(favorites) > 0:
         await message.answer("Избранное:")
-        for boat in favorites:
-            time.sleep(1.5)
-            await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.favorites_kb)
-        await message.answer("Кажись все)")
+        if len(favorites) > 10:
+            for boat in favorites[:10]:
+                await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.favorites_kb)
+            pages = math.ceil(len(favorites) / 10)
+            await message.answer(f"Cтраница 1 из {pages}", reply_markup=u_kb.next_kb)
+            await user_states.ShowBoats.Next.set()
+            await state.update_data({"boats": favorites[10:], "pages": pages, "c_page": 1})
+        else:
+            for boat in favorites:
+                await message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.favorites_kb)
+            await message.answer("Кажись все)")
     else:
         await message.answer("Вы еще ничего не добавили в избранное")
 
@@ -255,7 +267,7 @@ async def delete_boat(callback_query: CallbackQuery):
 
 
 async def next_page(callback_query: CallbackQuery, state: FSMContext):
-    data = await state.get_data("boats")
+    data = await state.get_data() #"boats"
     boats = data.get("boats")
     pages = data.get("pages")
     c_page = data.get("c_page")
@@ -265,7 +277,7 @@ async def next_page(callback_query: CallbackQuery, state: FSMContext):
         for boat in boats[:10]:
             await callback_query.message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
         await callback_query.message.answer(f"Cтраница {c_page} из {pages}", reply_markup=u_kb.next_kb)
-        await state.update_data({"boats": boats[10:], "c_page": {c_page}})
+        await state.update_data({"boats": boats[10:], "c_page": c_page})
     else:
         for boat in boats:
             await callback_query.message.answer(Boat.show(boat), parse_mode="HTML", reply_markup=u_kb.boat_kb)
@@ -311,10 +323,10 @@ def register_user_handlers(dp: Dispatcher):
 
     dp.register_message_handler(print_message)
 
-    dp.register_callback_query_handler(add_to_favorites, lambda c: c.data == "add_to_favorites")
-    dp.register_callback_query_handler(cancel_favorites, lambda c: c.data == "cancel_favorites")
-    dp.register_callback_query_handler(delete_from_favorites, lambda c: c.data == "delete_from_favorites")
-    dp.register_callback_query_handler(delete_boat, text="delete_boat")
+    dp.register_callback_query_handler(add_to_favorites, lambda c: c.data == "add_to_favorites", state="*")
+    dp.register_callback_query_handler(cancel_favorites, lambda c: c.data == "cancel_favorites", state="*")
+    dp.register_callback_query_handler(delete_from_favorites, lambda c: c.data == "delete_from_favorites", state="*")
+    dp.register_callback_query_handler(delete_boat, text="delete_boat", state="*")
     dp.register_callback_query_handler(next_page, text="next_page", state=user_states.ShowBoats.Next)
     dp.register_callback_query_handler(cancel_page, text="cancel_page", state=user_states.ShowBoats.Next)
     # ИЛИ МОЖНО ТАК dp.register_callback_query_handler(delete_boat, lambda c: c.data == "delete_boat")

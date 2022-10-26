@@ -149,5 +149,5 @@ class BoatsSite:
             boat_location = li_.xpath(self.__loc_xpath)
             boat_location = str(boat_location[0]) if len(boat_location) > 0 else ""
 
-            boats_list.append(Boat(boat_name, boat_price, boat_link, boat_location))
+            boats_list.append(Boat(boat_name, boat_price, boat_price, boat_link, boat_location))
         return boats_list
