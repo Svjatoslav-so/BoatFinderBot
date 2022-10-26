@@ -381,3 +381,12 @@ class BoatDB:
                 boats_dict.update({keys[i]: boat[i]})
             boats_dict_list.append(boats_dict)
         return boats_dict_list
+
+    def get_all_hull_material(self) -> list[str]:
+        con = sqlite3.connect(self._db_name)
+        cur = con.cursor()
+        request = f"""SELECT DISTINCT hull_material FROM {self._boats_table};"""
+        res = cur.execute(request)
+        material = res.fetchall()
+        con.close()
+        return [m[0] for m in material]

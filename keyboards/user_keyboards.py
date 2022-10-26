@@ -100,3 +100,12 @@ favorites_kb.row(delete_from_favorites_btn)
 
 next_kb = InlineKeyboardMarkup()
 next_kb.row(cancel_page_btn, next_page_btn)
+
+
+def get_hull_material_kb(materials: list):
+    kb = ReplyKeyboardMarkup(resize_keyboard=True, row_width=3)
+    for m in materials:
+        if not(m in [None]):
+            btn = KeyboardButton(str(m))
+            kb.insert(btn)
+    return kb

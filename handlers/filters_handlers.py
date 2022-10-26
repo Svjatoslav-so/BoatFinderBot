@@ -1,8 +1,13 @@
+import os
+
 from aiogram.dispatcher import FSMContext
 from aiogram.types import Message
 
 from keyboards import user_keyboards as u_kb
+from models.DBManager import BoatDB
 from states import user_states
+
+db = BoatDB(os.environ['database'])
 
 
 async def add_boat_name(message: Message, state: FSMContext):
@@ -110,3 +115,27 @@ async def set_max_price(message: Message, state: FSMContext):
         await user_states.NewFilter.AddPrice.set()
     await message.answer("Максимальная цена установлена!", reply_markup=u_kb.price_kb)
 
+
+async def add_hull_material(message: Message, state: FSMContext):
+    materials = db.get_all_hull_material()
+    if len(materials) > 0:
+        await message.answer("Выберите материал корпуса:",
+                             reply_markup=u_kb.get_hull_material_kb(materials))
+    else:
+        await message.answer("Введите интерисующий вас материал корпуса:")
+    if await state.get_state() == user_states.AddFilter.AddFilterParam.state:
+        await user_states.AddFilter.SetHullMaterial.set()
+    else:
+        await user_states.NewFilter.SetHullMaterial.set()
+
+
+async def set_hull_material(message: Message, state: FSMContext):
+    await state.update_data({"hull_material": message.text})
+    if await state.get_state() == user_states.AddFilter.SetHullMaterial.state:
+        await message.answer("Выберите какие параметры вы хотите настроить. Чтобы применить выберите /apply или"
+                             " /apply_and_save, чтобы сохранить этот фильтр.", reply_markup=u_kb.add_filter_kb)
+        await user_states.AddFilter.AddFilterParam.set()
+    else:
+        await message.answer("Выберите какие параметры вы хотите настроить. Чтобы применить жмите /save_filter",
+                             reply_markup=u_kb.new_filter_kb)
+        await user_states.NewFilter.AddFilterParam.set()
