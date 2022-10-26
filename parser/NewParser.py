@@ -176,9 +176,13 @@ def parse(threads_num: int = 10, res_list: list = None):
 def get_price(price: str) -> str:
     if not (price is None) and price.count("EUR") > 0:
         res = ""
-        for s in price[price.find("EUR"):]:
+        for s in price[price.find("EUR ")+4:]:
             if s.isdigit():
                 res += s
+            elif s == ".":
+                pass
+            else:
+                break
 
         return res
     else:
@@ -223,23 +227,24 @@ def toBoat(boat: dict) -> Boat:
 
 
 if __name__ == '__main__':
-    with open("log_thread.txt", "w") as fw:
-        pass
+    # with open("log_thread.txt", "w") as fw:
+    #     pass
+    #
+    # with open("log.txt", "w") as fw_:
+    #     pass
+    #
+    # boats_li = []
+    # time_start = time.time()
+    # print("LEN: ", len(parse(10, boats_li)))
+    # time_end = time.time()
+    # print("boats ", len(boats_li))
+    # print("TIME: ", time_end - time_start)
+    #
+    # for b in boats_li:
+    #     # pass
+    #     print(b)
 
-    with open("log.txt", "w") as fw_:
-        pass
-
-    boats_li = []
-    time_start = time.time()
-    print("LEN: ", len(parse(10, boats_li)))
-    time_end = time.time()
-    print("boats ", len(boats_li))
-    print("TIME: ", time_end - time_start)
-
-    for b in boats_li:
-        # pass
-        print(b)
-    # print(get_price("DKK 229.000,-apx. EUR 30.791,-Basis for Negotiation / EU taxes paid"))
+    print(get_price("CHF 79.990,-apx. EUR 80.947,-incl. 7.7% Swiss VAT"))
     # print(get_length_beam("11.03 m x 3.18 m"))
     # l, b = get_length_beam("11.03 m x 3.18 m")
     # print(float(l))
