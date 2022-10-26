@@ -191,3 +191,26 @@ async def set_fuel_type(message: Message, state: FSMContext):
         await user_states.NewFilter.AddFilterParam.set()
 
 
+async def add_boat_type(message: Message, state: FSMContext):
+    boat_types = db.get_boat_type()
+    if len(boat_types) > 0:
+        await message.answer("Выберите тип лодки:",
+                             reply_markup=u_kb.get_something_kb(boat_types))
+    else:
+        await message.answer("Введите интересующее вас тип лодки:")
+    if await state.get_state() == user_states.AddFilter.AddFilterParam.state:
+        await user_states.AddFilter.SetBoatType.set()
+    else:
+        await user_states.NewFilter.SetBoatType.set()
+
+
+async def set_boat_type(message: Message, state: FSMContext):
+    await state.update_data({"type": message.text})
+    if await state.get_state() == user_states.AddFilter.SetBoatType.state:
+        await message.answer("Выберите какие параметры вы хотите настроить. Чтобы применить выберите /apply или"
+                             " /apply_and_save, чтобы сохранить этот фильтр.", reply_markup=u_kb.add_filter_kb)
+        await user_states.AddFilter.AddFilterParam.set()
+    else:
+        await message.answer("Выберите какие параметры вы хотите настроить. Чтобы применить жмите /save_filter",
+                             reply_markup=u_kb.new_filter_kb)
+        await user_states.NewFilter.AddFilterParam.set()

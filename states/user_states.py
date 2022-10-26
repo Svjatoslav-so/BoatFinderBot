@@ -17,6 +17,7 @@ class AddFilter(StatesGroup):
     SetHullMaterial = State()
     SetCategory = State()
     SetFuelType = State()
+    SetBoatType = State()
 
 
 class NewFilter(StatesGroup):
@@ -31,6 +32,7 @@ class NewFilter(StatesGroup):
     SetHullMaterial = State()
     SetCategory = State()
     SetFuelType = State()
+    SetBoatType = State()
 
 
 class ShowBoats(StatesGroup):

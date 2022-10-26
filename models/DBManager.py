@@ -390,3 +390,10 @@ class BoatDB:
         result_list = res.fetchall()
         con.close()
         return [r[0] for r in result_list]
+
+    def get_boat_type(self) -> set:
+        types_list = self.get_something_distinct("type")
+        types_set = set()
+        for type_ in types_list:
+            types_set.update([t.strip() for t in type_.split(",")])
+        return types_set
