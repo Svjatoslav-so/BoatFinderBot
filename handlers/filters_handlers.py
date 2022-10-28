@@ -214,3 +214,69 @@ async def set_boat_type(message: Message, state: FSMContext):
         await message.answer("Выберите какие параметры вы хотите настроить. Чтобы применить жмите /save_filter",
                              reply_markup=u_kb.new_filter_kb)
         await user_states.NewFilter.AddFilterParam.set()
+
+
+async def add_length(message: Message, state: FSMContext):
+    await message.answer("Установите минимальную и максимальную длину корпуса, чтобы завершить жмите /save_length",
+                         reply_markup=u_kb.length_kb)
+    if await state.get_state() == user_states.AddFilter.AddFilterParam.state:
+        await user_states.AddFilter.AddLength.set()
+    else:
+        await user_states.NewFilter.AddLength.set()
+
+
+async def set_length(message: Message, state: FSMContext):
+    if message.text == "/min_length":
+        await message.answer("Введите минимальную длину(число):")
+        if await state.get_state() == user_states.AddFilter.AddLength.state:
+            await user_states.AddFilter.SetMinLength.set()
+        else:
+            await user_states.NewFilter.SetMinLength.set()
+    elif message.text == "/max_length":
+        await message.answer("Введите максимальную длину(число):")
+        if await state.get_state() == user_states.AddFilter.AddLength.state:
+            await user_states.AddFilter.SetMaxLength.set()
+        else:
+            await user_states.NewFilter.SetMaxLength.set()
+    elif message.text == "/save_length":
+        await message.answer("Длина сохранена!")
+        if await state.get_state() == user_states.AddFilter.AddLength.state:
+            await message.answer("Выберите какие параметры вы хотите настроить. Чтобы применить выберите /apply или"
+                                 " /apply_and_save, чтобы сохранить этот фильтр.", reply_markup=u_kb.add_filter_kb)
+            await user_states.AddFilter.AddFilterParam.set()
+        else:
+            await message.answer("Выберите какие параметры вы хотите настроить. Чтобы применить жмите /save_filter",
+                                 reply_markup=u_kb.new_filter_kb)
+            await user_states.NewFilter.AddFilterParam.set()
+    else:
+        await message.delete()
+        await message.answer("Установите минимальную и максимальную длины, чтобы завершить жмите /save_length",
+                             reply_markup=u_kb.length_kb)
+
+
+async def set_min_length(message: Message, state: FSMContext):
+    try:
+        min_length = float(message.text)
+        min_length = 0.0 if min_length < 0 else min_length
+    except ValueError:
+        min_length = 0.0
+    await state.update_data({"min_length": min_length})
+    if await state.get_state() == user_states.AddFilter.SetMinLength.state:
+        await user_states.AddFilter.AddLength.set()
+    else:
+        await user_states.NewFilter.AddLength.set()
+    await message.answer("Минимальная длина установлена!", reply_markup=u_kb.length_kb)
+
+
+async def set_max_length(message: Message, state: FSMContext):
+    try:
+        max_length = float(message.text)
+        max_length = 100 if max_length < 0 else max_length
+    except ValueError:
+        max_length = 100
+    await state.update_data({"max_length": max_length})
+    if await state.get_state() == user_states.AddFilter.SetMaxLength.state:
+        await user_states.AddFilter.AddLength.set()
+    else:
+        await user_states.NewFilter.AddLength.set()
+    await message.answer("Максимальная длина установлена!", reply_markup=u_kb.length_kb)

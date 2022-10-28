@@ -276,6 +276,7 @@ def register_user_handlers(dp: Dispatcher):
                                 state=(user_states.AddFilter.AddFilterParam, user_states.NewFilter.AddFilterParam))
     dp.register_message_handler(fh.set_location,
                                 state=(user_states.AddFilter.SetLocation, user_states.NewFilter.SetLocation))
+
     dp.register_message_handler(fh.add_price, commands="price",
                                 state=(user_states.AddFilter.AddFilterParam, user_states.NewFilter.AddFilterParam))
     dp.register_message_handler(fh.set_price, state=(user_states.AddFilter.AddPrice, user_states.NewFilter.AddPrice))
@@ -283,6 +284,7 @@ def register_user_handlers(dp: Dispatcher):
                                 state=(user_states.AddFilter.SetMinPrice, user_states.NewFilter.SetMinPrice))
     dp.register_message_handler(fh.set_max_price,
                                 state=(user_states.AddFilter.SetMaxPrice, user_states.NewFilter.SetMaxPrice))
+
     dp.register_message_handler(fh.add_hull_material, commands="hull_material",
                                 state=(user_states.AddFilter.AddFilterParam, user_states.NewFilter.AddFilterParam))
     dp.register_message_handler(fh.set_hull_material,
@@ -299,6 +301,14 @@ def register_user_handlers(dp: Dispatcher):
                                 state=(user_states.AddFilter.AddFilterParam, user_states.NewFilter.AddFilterParam))
     dp.register_message_handler(fh.set_boat_type,
                                 state=(user_states.AddFilter.SetBoatType, user_states.NewFilter.SetBoatType))
+
+    dp.register_message_handler(fh.add_length, commands="length",
+                                state=(user_states.AddFilter.AddFilterParam, user_states.NewFilter.AddFilterParam))
+    dp.register_message_handler(fh.set_length, state=(user_states.AddFilter.AddLength, user_states.NewFilter.AddLength))
+    dp.register_message_handler(fh.set_min_length,
+                                state=(user_states.AddFilter.SetMinLength, user_states.NewFilter.SetMinLength))
+    dp.register_message_handler(fh.set_max_length,
+                                state=(user_states.AddFilter.SetMaxLength, user_states.NewFilter.SetMaxLength))
 
     dp.register_message_handler(apply, commands="apply", state=user_states.AddFilter.AddFilterParam)
     dp.register_message_handler(add_filter_name, commands="apply_and_save", state=user_states.AddFilter.AddFilterParam)
