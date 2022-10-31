@@ -10,8 +10,19 @@ from states import user_states
 db = BoatDB(os.environ['database'])
 
 
+async def back_to_filter_settings(message: Message, state: FSMContext):
+    if await state.get_state() in [s.state for s in user_states.AddFilter.all_states]:
+        await message.answer("Выберите какие параметры вы хотите настроить. Чтобы применить выберите /apply или"
+                             " /apply_and_save, чтобы сохранить этот фильтр.", reply_markup=u_kb.add_filter_kb)
+        await user_states.AddFilter.AddFilterParam.set()
+    else:
+        await message.answer("Выберите какие параметры вы хотите настроить. Чтобы применить жмите /save_filter",
+                             reply_markup=u_kb.new_filter_kb)
+        await user_states.NewFilter.AddFilterParam.set()
+
+
 async def add_boat_name(message: Message, state: FSMContext):
-    await message.answer("Введите название лодки:")
+    await message.answer("Введите название лодки:", reply_markup=u_kb.get_something_kb([]))
     if await state.get_state() == user_states.AddFilter.AddFilterParam.state:
         await user_states.AddFilter.SetBoatName.set()
     else:
@@ -31,7 +42,7 @@ async def set_boat_name(message: Message, state: FSMContext):
 
 
 async def add_location(message: Message, state: FSMContext):
-    await message.answer("Введите название локации:")
+    await message.answer("Введите название локации:", reply_markup=u_kb.get_something_kb([]))
     if await state.get_state() == user_states.AddFilter.AddFilterParam.state:
         await user_states.AddFilter.SetLocation.set()
     else:
@@ -72,19 +83,10 @@ async def set_price(message: Message, state: FSMContext):
             await user_states.AddFilter.SetMaxPrice.set()
         else:
             await user_states.NewFilter.SetMaxPrice.set()
-    elif message.text == "/save_price":
-        await message.answer("Цена сохранена!")
-        if await state.get_state() == user_states.AddFilter.AddPrice.state:
-            await message.answer("Выберите какие параметры вы хотите настроить. Чтобы применить выберите /apply или"
-                                 " /apply_and_save, чтобы сохранить этот фильтр.", reply_markup=u_kb.add_filter_kb)
-            await user_states.AddFilter.AddFilterParam.set()
-        else:
-            await message.answer("Выберите какие параметры вы хотите настроить. Чтобы применить жмите /save_filter",
-                                 reply_markup=u_kb.new_filter_kb)
-            await user_states.NewFilter.AddFilterParam.set()
     else:
         await message.delete()
-        await message.answer("Установите минимальную и максимальную цены, чтобы завершить жмите /save_price",
+
+        await message.answer(f"Установите минимальную и максимальную цены, чтобы завершить жмите /save_price",
                              reply_markup=u_kb.price_kb)
 
 
@@ -238,16 +240,6 @@ async def set_length(message: Message, state: FSMContext):
             await user_states.AddFilter.SetMaxLength.set()
         else:
             await user_states.NewFilter.SetMaxLength.set()
-    elif message.text == "/save_length":
-        await message.answer("Длина сохранена!")
-        if await state.get_state() == user_states.AddFilter.AddLength.state:
-            await message.answer("Выберите какие параметры вы хотите настроить. Чтобы применить выберите /apply или"
-                                 " /apply_and_save, чтобы сохранить этот фильтр.", reply_markup=u_kb.add_filter_kb)
-            await user_states.AddFilter.AddFilterParam.set()
-        else:
-            await message.answer("Выберите какие параметры вы хотите настроить. Чтобы применить жмите /save_filter",
-                                 reply_markup=u_kb.new_filter_kb)
-            await user_states.NewFilter.AddFilterParam.set()
     else:
         await message.delete()
         await message.answer("Установите минимальную и максимальную длины, чтобы завершить жмите /save_length",
@@ -280,3 +272,6 @@ async def set_max_length(message: Message, state: FSMContext):
     else:
         await user_states.NewFilter.AddLength.set()
     await message.answer("Максимальная длина установлена!", reply_markup=u_kb.length_kb)
+
+
+

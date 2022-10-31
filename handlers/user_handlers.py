@@ -268,6 +268,10 @@ def register_user_handlers(dp: Dispatcher):
     dp.register_message_handler(add_filter, commands=["add_filter", "add🎛"],
                                 state=(user_states.ApplyFilter.SetFilter, None))
     dp.register_message_handler(find, state=user_states.ApplyFilter.SetFilter)
+
+    dp.register_message_handler(fh.back_to_filter_settings, lambda m: m.text == "⬅️Назад",
+                                state=(user_states.AddFilter.all_states + user_states.NewFilter.all_states))
+
     dp.register_message_handler(fh.add_boat_name, commands="boat_name",
                                 state=(user_states.AddFilter.AddFilterParam, user_states.NewFilter.AddFilterParam))
     dp.register_message_handler(fh.set_boat_name,

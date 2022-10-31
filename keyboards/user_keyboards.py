@@ -38,11 +38,11 @@ save_filter_btn = KeyboardButton("/save_filter")
 
 min_price_btn = KeyboardButton("/min_price")
 max_price_btn = KeyboardButton("/max_price")
-save_price_btn = KeyboardButton("/save_price")
 
 min_length_btn = KeyboardButton("/min_length")
 max_length_btn = KeyboardButton("/max_length")
-save_length_btn = KeyboardButton("/save_length")
+
+back_to_filter_settings_btn = KeyboardButton("⬅️Назад")
 
 add_to_favorites_btn = InlineKeyboardButton("В избранное", callback_data="add_to_favorites")
 delete_boat_btn = InlineKeyboardButton("Удалить", callback_data="delete_boat")
@@ -82,10 +82,12 @@ my_data_kb = ReplyKeyboardMarkup(resize_keyboard=True)
 my_data_kb.row(menu_btn, my_filters_btn, my_favorites_btn)
 
 price_kb = ReplyKeyboardMarkup(resize_keyboard=True)
-price_kb.row(min_price_btn, max_price_btn, save_price_btn)
+price_kb.row(min_price_btn, max_price_btn)
+price_kb.row(back_to_filter_settings_btn)
 
 length_kb = ReplyKeyboardMarkup(resize_keyboard=True)
-length_kb.row(min_length_btn, max_length_btn, save_length_btn)
+length_kb.row(min_length_btn, max_length_btn)
+length_kb.row(back_to_filter_settings_btn)
 
 
 def get_my_filters_kb(filters):
@@ -111,6 +113,7 @@ next_kb.row(cancel_page_btn, next_page_btn)
 
 def get_something_kb(something_list: list | set):
     kb = ReplyKeyboardMarkup(resize_keyboard=True, row_width=3)
+    kb.insert(back_to_filter_settings_btn)
     for m in something_list:
         if not (m in [None]):
             btn = KeyboardButton(str(m))
