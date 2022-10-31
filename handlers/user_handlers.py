@@ -314,6 +314,14 @@ def register_user_handlers(dp: Dispatcher):
     dp.register_message_handler(fh.set_max_length,
                                 state=(user_states.AddFilter.SetMaxLength, user_states.NewFilter.SetMaxLength))
 
+    dp.register_message_handler(fh.add_year, commands="year",
+                                state=(user_states.AddFilter.AddFilterParam, user_states.NewFilter.AddFilterParam))
+    dp.register_message_handler(fh.set_year, state=(user_states.AddFilter.AddYear, user_states.NewFilter.AddYear))
+    dp.register_message_handler(fh.set_min_year,
+                                state=(user_states.AddFilter.SetMinYear, user_states.NewFilter.SetMinYear))
+    dp.register_message_handler(fh.set_max_year,
+                                state=(user_states.AddFilter.SetMaxYear, user_states.NewFilter.SetMaxYear))
+
     dp.register_message_handler(apply, commands="apply", state=user_states.AddFilter.AddFilterParam)
     dp.register_message_handler(add_filter_name, commands="apply_and_save", state=user_states.AddFilter.AddFilterParam)
     dp.register_message_handler(apply_and_save, state=user_states.AddFilter.SetFilterName)

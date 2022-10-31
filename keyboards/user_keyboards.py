@@ -42,6 +42,9 @@ max_price_btn = KeyboardButton("/max_price")
 min_length_btn = KeyboardButton("/min_length")
 max_length_btn = KeyboardButton("/max_length")
 
+min_year_btn = KeyboardButton("/min_year")
+max_year_btn = KeyboardButton("/max_year")
+
 back_to_filter_settings_btn = KeyboardButton("⬅️Назад")
 
 add_to_favorites_btn = InlineKeyboardButton("В избранное", callback_data="add_to_favorites")
@@ -88,6 +91,10 @@ price_kb.row(back_to_filter_settings_btn)
 length_kb = ReplyKeyboardMarkup(resize_keyboard=True)
 length_kb.row(min_length_btn, max_length_btn)
 length_kb.row(back_to_filter_settings_btn)
+
+year_kb = ReplyKeyboardMarkup(resize_keyboard=True)
+year_kb.row(min_year_btn, max_year_btn)
+year_kb.row(back_to_filter_settings_btn)
 
 
 def get_my_filters_kb(filters):

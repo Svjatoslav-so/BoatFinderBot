@@ -14,7 +14,6 @@ class AddFilter(StatesGroup):
     AddPrice = State()
     SetMinPrice = State()
     SetMaxPrice = State()
-    SavePrice = State()
 
     SetHullMaterial = State()
     SetCategory = State()
@@ -24,7 +23,10 @@ class AddFilter(StatesGroup):
     AddLength = State()
     SetMinLength = State()
     SetMaxLength = State()
-    SaveLength = State()
+    # Year
+    AddYear = State()
+    SetMinYear = State()
+    SetMaxYear = State()
 
 
 class NewFilter(StatesGroup):
@@ -36,7 +38,6 @@ class NewFilter(StatesGroup):
     AddPrice = State()
     SetMinPrice = State()
     SetMaxPrice = State()
-    SavePrice = State()
 
     SetHullMaterial = State()
     SetCategory = State()
@@ -46,7 +47,10 @@ class NewFilter(StatesGroup):
     AddLength = State()
     SetMinLength = State()
     SetMaxLength = State()
-    SaveLength = State()
+    # Year
+    AddYear = State()
+    SetMinYear = State()
+    SetMaxYear = State()
 
 
 class ShowBoats(StatesGroup):

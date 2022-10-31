@@ -1,3 +1,4 @@
+import datetime
 import os
 
 from aiogram.dispatcher import FSMContext
@@ -62,7 +63,7 @@ async def set_location(message: Message, state: FSMContext):
 
 
 async def add_price(message: Message, state: FSMContext):
-    await message.answer("Установите минимальную и максимальную цены, чтобы завершить жмите /save_price",
+    await message.answer("Установите минимальную и максимальную цены.",
                          reply_markup=u_kb.price_kb)
     if await state.get_state() == user_states.AddFilter.AddFilterParam.state:
         await user_states.AddFilter.AddPrice.set()
@@ -86,7 +87,7 @@ async def set_price(message: Message, state: FSMContext):
     else:
         await message.delete()
 
-        await message.answer(f"Установите минимальную и максимальную цены, чтобы завершить жмите /save_price",
+        await message.answer(f"Установите минимальную и максимальную цены.",
                              reply_markup=u_kb.price_kb)
 
 
@@ -219,7 +220,7 @@ async def set_boat_type(message: Message, state: FSMContext):
 
 
 async def add_length(message: Message, state: FSMContext):
-    await message.answer("Установите минимальную и максимальную длину корпуса, чтобы завершить жмите /save_length",
+    await message.answer("Установите минимальную и максимальную длину корпуса.",
                          reply_markup=u_kb.length_kb)
     if await state.get_state() == user_states.AddFilter.AddFilterParam.state:
         await user_states.AddFilter.AddLength.set()
@@ -242,7 +243,7 @@ async def set_length(message: Message, state: FSMContext):
             await user_states.NewFilter.SetMaxLength.set()
     else:
         await message.delete()
-        await message.answer("Установите минимальную и максимальную длины, чтобы завершить жмите /save_length",
+        await message.answer("Установите минимальную и максимальную длины.",
                              reply_markup=u_kb.length_kb)
 
 
@@ -274,4 +275,58 @@ async def set_max_length(message: Message, state: FSMContext):
     await message.answer("Максимальная длина установлена!", reply_markup=u_kb.length_kb)
 
 
+async def add_year(message: Message, state: FSMContext):
+    await message.answer("Установите минимальный и максимальный год выпуска.",
+                         reply_markup=u_kb.year_kb)
+    if await state.get_state() == user_states.AddFilter.AddFilterParam.state:
+        await user_states.AddFilter.AddYear.set()
+    else:
+        await user_states.NewFilter.AddYear.set()
 
+
+async def set_year(message: Message, state: FSMContext):
+    if message.text == "/min_year":
+        await message.answer("Введите минимальный год выпуска(число):")
+        if await state.get_state() == user_states.AddFilter.AddYear.state:
+            await user_states.AddFilter.SetMinYear.set()
+        else:
+            await user_states.NewFilter.SetMinYear.set()
+    elif message.text == "/max_year":
+        await message.answer("Введите максимальный год выпуска(число):")
+        if await state.get_state() == user_states.AddFilter.AddYear.state:
+            await user_states.AddFilter.SetMaxYear.set()
+        else:
+            await user_states.NewFilter.SetMaxYear.set()
+    else:
+        await message.delete()
+        await message.answer("Установите минимальный и максимальный год выпуска.",
+                             reply_markup=u_kb.year_kb)
+
+
+async def set_min_year(message: Message, state: FSMContext):
+    try:
+        min_year = int(message.text)
+        min_year = 1900 if min_year < 1900 else min_year
+
+    except ValueError:
+        min_year = 1900
+    await state.update_data({"min_year": min_year})
+    if await state.get_state() == user_states.AddFilter.SetMinYear.state:
+        await user_states.AddFilter.AddYear.set()
+    else:
+        await user_states.NewFilter.AddYear.set()
+    await message.answer("Минимальный год выпуска установлен!", reply_markup=u_kb.year_kb)
+
+
+async def set_max_year(message: Message, state: FSMContext):
+    try:
+        max_year = int(message.text)
+        max_year = datetime.datetime.now().year if max_year < 1900 else max_year
+    except ValueError:
+        max_year = datetime.datetime.now().year
+    await state.update_data({"max_year": max_year})
+    if await state.get_state() == user_states.AddFilter.SetMaxYear.state:
+        await user_states.AddFilter.AddYear.set()
+    else:
+        await user_states.NewFilter.AddYear.set()
+    await message.answer("Максимальный год выпуска установлен!", reply_markup=u_kb.year_kb)
