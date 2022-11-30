@@ -366,6 +366,14 @@ class BoatDB:
         con.commit()
         con.close()
 
+    def delete_filter(self, user_id: int, filter_name: str):
+        con = sqlite3.connect(self._db_name)
+        cur = con.cursor()
+        request = f"""DELETE FROM {self._filters_table} WHERE user_id = "{user_id}" AND filter_name = "{filter_name}";"""
+        cur.execute(request)
+        con.commit()
+        con.close()
+
     @staticmethod
     def boats_from_tuple_to_dict(boats: list[tuple], columns: str) -> list[dict]:
         if columns == "*":

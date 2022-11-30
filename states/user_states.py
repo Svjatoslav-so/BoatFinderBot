@@ -27,6 +27,10 @@ class AddFilter(StatesGroup):
     AddYear = State()
     SetMinYear = State()
     SetMaxYear = State()
+    # Draft
+    AddDraft = State()
+    SetMinDraft = State()
+    SetMaxDraft = State()
 
 
 class NewFilter(StatesGroup):
@@ -51,6 +55,10 @@ class NewFilter(StatesGroup):
     AddYear = State()
     SetMinYear = State()
     SetMaxYear = State()
+    # Draft
+    AddDraft = State()
+    SetMinDraft = State()
+    SetMaxDraft = State()
 
 
 class ShowBoats(StatesGroup):

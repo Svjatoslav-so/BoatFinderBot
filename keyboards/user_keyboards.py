@@ -45,6 +45,9 @@ max_length_btn = KeyboardButton("/max_length")
 min_year_btn = KeyboardButton("/min_year")
 max_year_btn = KeyboardButton("/max_year")
 
+min_draft_btn = KeyboardButton("/min_draft")
+max_draft_btn = KeyboardButton("/max_draft")
+
 back_to_filter_settings_btn = KeyboardButton("⬅️Назад")
 
 add_to_favorites_btn = InlineKeyboardButton("В избранное", callback_data="add_to_favorites")
@@ -96,13 +99,27 @@ year_kb = ReplyKeyboardMarkup(resize_keyboard=True)
 year_kb.row(min_year_btn, max_year_btn)
 year_kb.row(back_to_filter_settings_btn)
 
+draft_kb = ReplyKeyboardMarkup(resize_keyboard=True)
+draft_kb.row(min_draft_btn, max_draft_btn)
+draft_kb.row(back_to_filter_settings_btn)
 
+
+# old version for user_handlers.my_filters
 def get_my_filters_kb(filters):
     kb = InlineKeyboardMarkup(row_width=3)
     for f in filters:
         btn = InlineKeyboardButton(str(f[0]), callback_data=str(f[0]))
         kb.insert(btn)
     return kb
+
+
+# new version for user_handlers.my_filters
+def get_my_filter_with_delete(the_filter):
+    show_filter_btn = InlineKeyboardButton("Показать фильтр", callback_data=str(the_filter[0]))
+    delete_filter_btn = InlineKeyboardButton("Удалить фильтр", callback_data="delete_filter")
+    my_filter_delete_kb = InlineKeyboardMarkup()
+    my_filter_delete_kb.row(show_filter_btn, delete_filter_btn)
+    return my_filter_delete_kb
 
 
 boat_kb = InlineKeyboardMarkup()

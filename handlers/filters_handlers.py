@@ -330,3 +330,59 @@ async def set_max_year(message: Message, state: FSMContext):
     else:
         await user_states.NewFilter.AddYear.set()
     await message.answer("Максимальный год выпуска установлен!", reply_markup=u_kb.year_kb)
+
+
+async def add_draft(message: Message, state: FSMContext):
+    await message.answer("Установите минимальную и максимальную осадку.",
+                         reply_markup=u_kb.draft_kb)
+    if await state.get_state() == user_states.AddFilter.AddFilterParam.state:
+        await user_states.AddFilter.AddDraft.set()
+    else:
+        await user_states.NewFilter.AddDraft.set()
+
+
+async def set_draft(message: Message, state: FSMContext):
+    if message.text == "/min_draft":
+        await message.answer("Введите минимальную осадку(число):")
+        if await state.get_state() == user_states.AddFilter.AddDraft.state:
+            await user_states.AddFilter.SetMinDraft.set()
+        else:
+            await user_states.NewFilter.SetMinDraft.set()
+    elif message.text == "/max_draft":
+        await message.answer("Введите максимальную осадку(число):")
+        if await state.get_state() == user_states.AddFilter.AddDraft.state:
+            await user_states.AddFilter.SetMaxDraft.set()
+        else:
+            await user_states.NewFilter.SetMaxDraft.set()
+    else:
+        await message.delete()
+        await message.answer("Установите минимальную и максимальную осадку.",
+                             reply_markup=u_kb.length_kb)
+
+
+async def set_min_draft(message: Message, state: FSMContext):
+    try:
+        min_draft = float(message.text)
+        min_draft = 0.0 if min_draft < 0 else min_draft
+    except ValueError:
+        min_draft = 0.0
+    await state.update_data({"min_draft": min_draft})
+    if await state.get_state() == user_states.AddFilter.SetMinDraft.state:
+        await user_states.AddFilter.AddDraft.set()
+    else:
+        await user_states.NewFilter.AddDraft.set()
+    await message.answer("Минимальная осадка установлена!", reply_markup=u_kb.draft_kb)
+
+
+async def set_max_draft(message: Message, state: FSMContext):
+    try:
+        max_draft = float(message.text)
+        max_draft = 3 if max_draft < 0 else max_draft
+    except ValueError:
+        max_draft = 3
+    await state.update_data({"max_draft": max_draft})
+    if await state.get_state() == user_states.AddFilter.SetMaxDraft.state:
+        await user_states.AddFilter.AddDraft.set()
+    else:
+        await user_states.NewFilter.AddDraft.set()
+    await message.answer("Максимальная осадка установлена!", reply_markup=u_kb.draft_kb)
